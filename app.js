@@ -6,6 +6,8 @@ const Review=require("./models/review.js");
 const methodOverride=require('method-override');
 const path=require("path");
 const ejsmate=require('ejs-mate');
+const session=require('express-session');
+const flash=require('connect-flash');
 
 const ExpressError=require("./utils/ExpressError.js");
 app.set("view engine","ejs");
@@ -44,12 +46,29 @@ async function main() {
 main();
 
 
+const sessionoptions={
+    secret: "mysupersecretcode",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        expires:Date.now()+ 7*24*60*60*1000,
+        maxAge:7*24*60*60*1000,
+        httpOnly:true,
 
+    },
+}
+
+app.use(session(sessionoptions));
+app.use(flash());
+
+app.use((req,res,next)=>{
+    res.locals.sucess=req.flash("sucess");
+    res.locals.error=req.flash("error");
+    next();
+});
 
 app.use('/listings',listings);
 app.use('/listings/:id/reviews',reviews);
-
-
 
 
 app.get('/',(req,res)=>{
