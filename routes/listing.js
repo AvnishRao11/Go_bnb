@@ -4,6 +4,8 @@ const wrapAsync=require("../utils/wrapAsync.js");
 const Listing=require("../models/listing.js");
 const ExpressError=require("../utils/ExpressError.js");
 const {listingSchema}=require("../schema.js");
+const passport=require('passport');
+const{isLoggedIn}=require('../middleware.js');
 
 
 const validateListing= (req,res,next)=>{
@@ -24,8 +26,8 @@ router.get('/',wrapAsync(async(req,res)=>{
  }));
  
  //new Route
- router.get('/new',(req,res)=>{
-     res.render("./listings/new.ejs");
+ router.get('/new',isLoggedIn,(req,res)=>{
+    res.render("./listings/new.ejs");
  });
  
  //show Route 
@@ -40,7 +42,7 @@ router.get('/',wrapAsync(async(req,res)=>{
  }));
  
  //create Route
- router.post('/', validateListing, wrapAsync(async (req, res) => {
+ router.post('/', validateListing,isLoggedIn,wrapAsync(async (req, res) => {
      try {
          console.log("Received data:", req.body.listing);
          const newListing = new Listing(req.body.listing);
@@ -54,7 +56,7 @@ router.get('/',wrapAsync(async(req,res)=>{
      }
  }));
  // Edit Route
- router.get('/:id/edit', wrapAsync(async(req,res)=>{
+ router.get('/:id/edit',isLoggedIn,wrapAsync(async(req,res)=>{
      let {id}=req.params;
      const listing=await Listing.findById(id);
      if(!listing){
@@ -65,14 +67,14 @@ router.get('/',wrapAsync(async(req,res)=>{
  })) ;
  
  //update Route
- router.put('/:id',validateListing, wrapAsync(async(req,res)=>{
+ router.put('/:id',validateListing, isLoggedIn,wrapAsync(async(req,res)=>{
      let {id}=req.params;
      await Listing.findByIdAndUpdate(id,{...req.body.listing});
      req.flash("sucess","Listing Updated !!");
      res.redirect('/listings');
  }));
  //Delete Route
- router.delete('/:id',  wrapAsync(async(req,res)=>{
+ router.delete('/:id', isLoggedIn, wrapAsync(async(req,res)=>{
      let {id}=req.params;
     await Listing.findByIdAndDelete(id);
     req.flash("sucess","Listing Deleted !!");
