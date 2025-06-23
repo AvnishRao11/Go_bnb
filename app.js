@@ -1,3 +1,6 @@
+if(process.env.NODE_ENV!="production"){
+    require('dotenv').config();
+}
 const express=require('express');
 const app=express();
 const mongoose=require('mongoose');
@@ -84,9 +87,9 @@ app.use('/listings/:id/reviews',reviewroute);
 app.use('/',userroute);
 
 
-app.get('/',(req,res)=>{
-    res.send("Hi !! , i am root");
-});
+// app.get("/",(req,res)=>{
+//     res.send("Hi !! , i am root");
+// });
 
 app.use((err, req, res, next) => {
     const { statusCode = 500, message = "Something went wrong!" } = err;
@@ -115,31 +118,6 @@ app.get('/debug/listings', async (req, res) => {
         res.status(500).json({ error: "Failed to fetch listings" });
     }
 });
-
-// // Route to check MongoDB directly
-// app.get('/debug/mongodb', async (req, res) => {
-//     try {
-//         const db = mongoose.connection;
-//         const nativeDb = db.db;
-        
-//         // Get all collections
-//         const collections = await nativeDb.listCollections().toArray();
-//         console.log("MongoDB Collections:", collections);
-        
-//         // Get all documents in the listings collection
-//         const listings = await nativeDb.collection('listings').find({}).toArray();
-//         console.log("MongoDB Listings:", listings);
-        
-//         res.json({
-//             collections: collections.map(c => c.name),
-//             listingsCount: listings.length,
-//             listings: listings
-//         });
-//     } catch (err) {
-//         console.error("Error checking MongoDB:", err);
-//         res.status(500).json({ error: "Failed to check MongoDB" });
-//     }
-// });
 
 app.listen(8080,()=>{
     console.log("listening on 8080");

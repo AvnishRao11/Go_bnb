@@ -5,81 +5,32 @@ const Listing=require("../models/listing.js");
 const ExpressError=require("../utils/ExpressError.js");
 const {listingSchema}=require("../schema.js");
 const passport=require('passport');
-const{isLoggedIn}=require('../middleware.js');
+const{isLoggedIn, isOwner,validateListing}=require('../middleware.js');
+const review = require('../models/review.js');
+const listingController=require("../controllers/listing.js");
+const {storage}=require("../cloud_config.js");
+const multer  = require('multer');
+const upload = multer({ storage });
 
 
-const validateListing= (req,res,next)=>{
-    let result=  listingSchema.validate(req.body);
-    console.log(result);
-    if(result.error){
-        throw new ExpressError(400,result.error);
-    }
-    else{
-        next();
-    }
-}
+router
+.route("/")
+.get(wrapAsync(listingController.index))
+.post(isLoggedIn,upload.single('listing[image]'),validateListing,wrapAsync(listingController.createNewListing));
 
-//Index Route
-router.get('/',wrapAsync(async(req,res)=>{
-    const allLisitngs=await Listing.find({});
-    res.render("./listings/index.ejs",{allLisitngs});
- }));
- 
+
  //new Route
- router.get('/new',isLoggedIn,(req,res)=>{
-    res.render("./listings/new.ejs");
- });
- 
- //show Route 
- router.get('/:id', wrapAsync(async(req,res)=>{
- let {id}=req.params;
- const listing=await Listing.findById(id).populate("review");
- if(!listing){
-    req.flash("error","Listing does not exist !!");
-    return res.redirect('/listings');
- }
- res.render("./listings/show.ejs",{listing});
- }));
- 
- //create Route
- router.post('/', validateListing,isLoggedIn,wrapAsync(async (req, res) => {
-     try {
-         console.log("Received data:", req.body.listing);
-         const newListing = new Listing(req.body.listing);
-         console.log("Created new listing object:", newListing);
-         const savedListing = await newListing.save();
-        req.flash("sucess","new listing created !!");
-         res.redirect("/listings");
-     } catch (err) {
-         console.error("Error saving listing:", err);
-         throw new ExpressError(500, "Failed to save listing");
-     }
- }));
- // Edit Route
- router.get('/:id/edit',isLoggedIn,wrapAsync(async(req,res)=>{
-     let {id}=req.params;
-     const listing=await Listing.findById(id);
-     if(!listing){
-        req.flash("error","Listing does not exist !!");
-        return res.redirect('/listings');
-     }
-     res.render("./listings/edit.ejs",{listing});
- })) ;
- 
- //update Route
- router.put('/:id',validateListing, isLoggedIn,wrapAsync(async(req,res)=>{
-     let {id}=req.params;
-     await Listing.findByIdAndUpdate(id,{...req.body.listing});
-     req.flash("sucess","Listing Updated !!");
-     res.redirect('/listings');
- }));
- //Delete Route
- router.delete('/:id', isLoggedIn, wrapAsync(async(req,res)=>{
-     let {id}=req.params;
-    await Listing.findByIdAndDelete(id);
-    req.flash("sucess","Listing Deleted !!");
-    res.redirect('/listings');
- }));
+ router.get('/new',isLoggedIn,listingController.renderNewForm);
  
 
+router .route("/:id")
+.get( wrapAsync(listingController.showListing))
+.put( isLoggedIn,isOwner,upload.single('listing[image]'),validateListing,wrapAsync(listingController.updateListing))
+.delete(isLoggedIn,isOwner, wrapAsync(listingController.deleteListing))
+
+
+
+ // Edit Route
+ router.get('/:id/edit',isLoggedIn,isOwner,wrapAsync(listingController.editListing));
+ 
  module.exports=router;

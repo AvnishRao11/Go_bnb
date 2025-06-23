@@ -105,3 +105,9 @@ body{
     color:white;
     border-radius:0.3rem;
 }
+
+/* map */
+#map{
+    height:400px;
+    width:130vh;
+}
