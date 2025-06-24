@@ -12,9 +12,13 @@ const {storage}=require("../cloud_config.js");
 const multer  = require('multer');
 const upload = multer({ storage });
 
+// Search route for listings by country (must be before /:id)
+router.get('/search', wrapAsync(listingController.searchByCountry));
 
-router
-.route("/")
+// Filter route for listings
+router.get('/filter', wrapAsync(listingController.filterListings));
+
+router.route("/")
 .get(wrapAsync(listingController.index))
 .post(isLoggedIn,upload.single('listing[image]'),validateListing,wrapAsync(listingController.createNewListing));
 
@@ -30,7 +34,7 @@ router .route("/:id")
 
 
 
- // Edit Route
- router.get('/:id/edit',isLoggedIn,isOwner,wrapAsync(listingController.editListing));
- 
- module.exports=router;
+// Edit Route
+router.get('/:id/edit',isLoggedIn,isOwner,wrapAsync(listingController.editListing));
+
+module.exports=router;

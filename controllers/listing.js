@@ -111,3 +111,93 @@ module.exports.renderNewForm=(req,res)=>{
     req.flash("sucess","Listing Deleted !!");
     res.redirect('/listings');
  };
+
+// Search listings by country
+module.exports.searchByCountry = async (req, res) => {
+    try {
+        const { country } = req.query;
+        let query = {};
+        if (country && country.trim() !== "") {
+            // Case-insensitive search for country
+            query.country = { $regex: new RegExp(country, "i") };
+        }
+        const allLisitngs = await Listing.find(query);
+        res.render("./listings/index.ejs", { allLisitngs });
+    } catch (err) {
+        console.error("Error searching listings by country:", err);
+        req.flash("error", "Failed to search listings");
+        res.redirect("/listings");
+    }
+};
+
+// Filter listings by filter type
+module.exports.filterListings = async (req, res) => {
+    try {
+        const { filter } = req.query;
+        let query = {};
+        switch (filter) {
+            case 'trending':
+                // Example: Trending could be listings with most reviews or highest price
+                query = {}; // You can customize this logic
+                break;
+            case 'rooms':
+                // Example: Rooms could be listings with 'room' in the title or description
+                query = { $or: [
+                    { title: { $regex: /room/i } },
+                    { description: { $regex: /room/i } }
+                ] };
+                break;
+            case 'iconic-cities':
+                // Example: Iconic cities, you can list specific cities
+                query = { location: { $in: ["New York", "Paris", "London", "Tokyo", "Mumbai"] } };
+                break;
+            case 'mountains':
+                // Example: Mountains in location or description
+                query = { $or: [
+                    { location: { $regex: /mountain/i } },
+                    { description: { $regex: /mountain/i } }
+                ] };
+                break;
+            case 'amazing-pools':
+                // Example: Pools in description
+                query = { description: { $regex: /pool/i } };
+                break;
+            case 'camping':
+                // Example: Camping in title or description
+                query = { $or: [
+                    { title: { $regex: /camping/i } },
+                    { description: { $regex: /camping/i } }
+                ] };
+                break;
+            case 'farms':
+                // Example: Farms in title or description
+                query = { $or: [
+                    { title: { $regex: /farm/i } },
+                    { description: { $regex: /farm/i } }
+                ] };
+                break;
+            case 'desert':
+                // Example: Desert in location or description
+                query = { $or: [
+                    { location: { $regex: /desert/i } },
+                    { description: { $regex: /desert/i } }
+                ] };
+                break;
+            case 'arctic':
+                // Example: Arctic in location or description
+                query = { $or: [
+                    { location: { $regex: /arctic/i } },
+                    { description: { $regex: /arctic/i } }
+                ] };
+                break;
+            default:
+                query = {};
+        }
+        const allLisitngs = await Listing.find(query);
+        res.render("./listings/index.ejs", { allLisitngs });
+    } catch (err) {
+        console.error("Error filtering listings:", err);
+        req.flash("error", "Failed to filter listings");
+        res.redirect("/listings");
+    }
+};

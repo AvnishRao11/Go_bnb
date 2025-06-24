@@ -33,40 +33,40 @@
             }
         </style>
          <div id="filters">
-            <div class="filter">
+            <div class="filter" data-filter="trending">
                 <div><i class="fa-solid fa-fire"></i></div>
                 <p>Trending</p>
             </div>
-            <div class="filter">
+            <div class="filter" data-filter="rooms">
                 <div><i class="fa-solid fa-bed"></i></div>
                 <p>Rooms</p>
             </div>
          <div id="filters">
-            <div class="filter">
+            <div class="filter" data-filter="iconic-cities">
                 <div><i class="fa-solid fa-city"></i></div>
                 <p>Iconic Cities</p>
             </div>
-            <div class="filter">
+            <div class="filter" data-filter="mountains">
                 <div><i class="fa-solid fa-mountain"></i></div>
                 <p>Mountains</p>
             </div>
-            <div class="filter">
+            <div class="filter" data-filter="amazing-pools">
                 <div><i class="fa-solid fa-person-swimming"></i></div>
                 <p>Amazing pools</p>
             </div>
-            <div class="filter">
+            <div class="filter" data-filter="camping">
                 <div><i class="fa-solid fa-tents"></i></div>
                 <p>Camping</p>
             </div>
-            <div class="filter">
+            <div class="filter" data-filter="farms">
                 <div><i class="fa-solid fa-cow"></i></div>
                 <p>Farms</p>
             </div>
-            <div class="filter">
+            <div class="filter" data-filter="desert">
                 <div><i class="fa-solid fa-sun"></i></div>
                 <p>Desert</p>
             </div>
-            <div class="filter">
+            <div class="filter" data-filter="arctic">
                 <div><i class="fa-solid fa-snowflake"></i></div>
                 <p>Arctic </p>
             </div>
@@ -78,6 +78,11 @@
                 </div>
             </div>
          </div>
+         
+         <form id="filterForm" action="/listings/filter" method="GET" style="display:none;">
+            <input type="hidden" name="filter" id="filterInput" />
+         </form>
+         
          <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 mt-3">
             <%for(let listing of allLisitngs){%>
                 <a href="/listings/<%=listing._id%>" class="listing-link">
@@ -114,5 +119,12 @@
             }
             
         }
-    })
+    });
+    // Filter click handler
+    document.querySelectorAll('.filter').forEach(function(el){
+        el.addEventListener('click', function(){
+            document.getElementById('filterInput').value = this.getAttribute('data-filter');
+            document.getElementById('filterForm').submit();
+        });
+    });
 </script>
