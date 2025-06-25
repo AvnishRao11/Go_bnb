@@ -106,9 +106,9 @@ app.use('/listings/:id/reviews',reviewroute);
 app.use('/',userroute);
 
 
-// app.get("/",(req,res)=>{
-//     res.send("Hi !! , i am root");
-// });
+app.get("/",(req,res)=>{
+    res.render("landing.ejs");
+});
 
 app.use((err, req, res, next) => {
     const { statusCode = 500, message = "Something went wrong!" } = err;
