@@ -11,7 +11,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'GO_bnb',
-    allowed_formats:["png","jpeg","jpg"],
+    allowed_formats:["png","jpeg","jpg","AVIF"],
   },
 });
  

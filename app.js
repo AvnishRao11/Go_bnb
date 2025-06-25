@@ -10,6 +10,7 @@ const methodOverride=require('method-override');
 const path=require("path");
 const ejsmate=require('ejs-mate');
 const session=require('express-session');
+const MongoStore = require('connect-mongo');
 const flash=require('connect-flash');
 const passport=require('passport');
 const LocalStrategy=require('passport-local').Strategy;
@@ -28,13 +29,16 @@ const listingroute=require('./routes/listing.js');
 const reviewroute=require('./routes/review.js');
 const userroute=require('./routes/user.js');
 
-const Mongo_url='mongodb://127.0.0.1:27017/wanderlust';
+// const Mongo_url='mongodb://127.0.0.1:27017/wanderlust';
+const dbUrl=process.env.ATLASDB_URL;
+
+
 
 // Database connection with detailed logging
 async function main() {
     try {
-        console.log("Attempting to connect to MongoDB at:", Mongo_url);
-        await mongoose.connect(Mongo_url);
+        // console.log("Attempting to connect to MongoDB at:", dbUrl);
+        await mongoose.connect(dbUrl);
         console.log("Connected to MongoDB successfully");
         
         // Verify database connection
@@ -52,9 +56,20 @@ async function main() {
 
 main();
 
+const store=MongoStore.create({
+    mongoUrl:dbUrl,
+    crypto:{
+        secret:process.env.SECRET,
+    },
+    touchAfter:24*3600,
+});
+store.on("error",()=>{
+    console.log("error in mongo session ",err);
+})
 
 const sessionoptions={
-    secret: "mysupersecretcode",
+    store,
+    secret: process.env.SECRET,
     resave: false,
     saveUninitialized: true,
     cookie: {

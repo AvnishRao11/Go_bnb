@@ -1,8 +1,16 @@
+require('dotenv').config({ path: '../.env' });
+
 const mongoose=require("mongoose");
 const initdata=require("./data.js");
 const Listing=require("../models/listing.js");
+const url=process.env.ATLASDB_URL;
+const Mongo_url=url;
 
-const Mongo_url='mongodb://127.0.0.1:27017/wanderlust';
+if (!Mongo_url) {
+    console.error("❌ ERROR: ATLASDB_URL not found in .env file.");
+    process.exit(1); // Stop script immediately
+}
+
 
 main()
 .then(()=>{
@@ -18,7 +26,7 @@ async function main(){
 
 const intitDB=async()=>{
    await Listing.deleteMany({});
-   initdata.data=initdata.data.map((obj)=>({...obj,Owner: "680add1575bc782d1e3ea843"}));
+//    initdata.data=initdata.data.map((obj)=>({...obj,Owner: "680add1575bc782d1e3ea843"}));
    await Listing.insertMany(initdata.data);
    console.log("data was initilasized");
 };
