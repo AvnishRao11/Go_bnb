@@ -31,6 +31,10 @@ const userroute=require('./routes/user.js');
 
 // const Mongo_url='mongodb://127.0.0.1:27017/wanderlust';
 const dbUrl=process.env.ATLASDB_URL;
+console.log("Running in:", process.env.NODE_ENV);
+console.log("ATLASDB_URL:", process.env.ATLASDB_URL);
+console.log("MAPBOX_TOKEN:", process.env.MAPBOX_TOKEN);
+console.log("CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
 
 
 

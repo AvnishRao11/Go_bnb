@@ -34,7 +34,7 @@ router .route("/:id")
 
 
 
-// Edit Route
-router.get('/:id/edit',isLoggedIn,isOwner,wrapAsync(listingController.editListing));
-
-module.exports=router;
+ // Edit Route
+ router.get('/:id/edit',isLoggedIn,isOwner,wrapAsync(listingController.editListing));
+ 
+ module.exports=router;
