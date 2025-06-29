@@ -4,12 +4,98 @@
   window.listing = <%- JSON.stringify(listing) %>;
 </script>
 
-
-
+<style>
+  .ai-insights {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+  }
+  
+  .ai-badge {
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    margin: 0.25rem;
+    display: inline-block;
+  }
+  
+  .sentiment-indicator {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+  
+  .sentiment-positive { background: #28a745; }
+  .sentiment-neutral { background: #ffc107; }
+  .sentiment-negative { background: #dc3545; }
+  
+  .ai-features {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+  
+  .favorite-btn {
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    border: none;
+    color: white;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .favorite-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    color: white;
+  }
+  
+  .favorite-btn.favorited {
+    background: linear-gradient(45deg, #dc3545, #28a745);
+  }
+</style>
 
 <div class="row mt-4">
   <div class="col-8 offset-2">
     <h3><%= listing.title %></h3>
+    
+    <!-- AI Insights Section -->
+    <div class="ai-insights">
+      <h5><i class="fas fa-robot"></i> AI Insights</h5>
+      <div class="row">
+        <div class="col-md-6">
+          <% if (listing.sentimentScore !== undefined) { %>
+            <div class="mb-2">
+              <span class="sentiment-indicator sentiment-<%= listing.sentimentScore > 0 ? 'positive' : listing.sentimentScore < 0 ? 'negative' : 'neutral' %>"></span>
+              <strong>Guest Satisfaction:</strong> 
+              <%= listing.sentimentScore > 0 ? 'Positive' : listing.sentimentScore < 0 ? 'Needs Improvement' : 'Neutral' %>
+            </div>
+          <% } %>
+          <% if (listing.propertyType) { %>
+            <div class="mb-2">
+              <strong>Property Type:</strong> <%= listing.propertyType.charAt(0).toUpperCase() + listing.propertyType.slice(1) %>
+            </div>
+          <% } %>
+        </div>
+        <div class="col-md-6">
+          <% if (listing.aiTags && listing.aiTags.length > 0) { %>
+            <div class="mb-2">
+              <strong>AI Tags:</strong>
+              <% listing.aiTags.slice(0, 3).forEach(tag => { %>
+                <span class="ai-badge"><%= tag %></span>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="card col-6 offset-2 listing-card">
@@ -21,6 +107,24 @@
           <p class ="card-text"> &#8377; <%= listing.price.toLocaleString("en-IN") %> </p>
           <p class="card-text"> <%= listing.location %> </p>
           <p class="card-text"> <%= listing.country %> </p>
+          
+          <!-- AI Features -->
+          <% if (listing.amenities && listing.amenities.length > 0) { %>
+            <div class="ai-features">
+              <h6><i class="fas fa-list"></i> Detected Amenities:</h6>
+              <% listing.amenities.forEach(amenity => { %>
+                <span class="badge bg-primary me-1"><%= amenity %></span>
+              <% }) %>
+            </div>
+          <% } %>
+          
+          <!-- Favorite Button -->
+          <% if (Curruser) { %>
+            <button class="btn favorite-btn" id="favoriteBtn" data-listing-id="<%= listing._id %>">
+              <i class="fas fa-heart"></i> 
+              <span id="favoriteText">Add to Favorites</span>
+            </button>
+          <% } %>
       </div>
     <!-- </div> -->
   </div> 
@@ -76,6 +180,14 @@
                     <h5 class="card-title">@<%= review.author?.username || "Anonymous" %></h5>
                      <p class="starability-result card-text" data-rating="<%=review.rating%>"></p>
                     <p class="card-text"><%=review.comment%></p>
+                    
+                    <!-- Review Sentiment -->
+                    <% if (review.sentiment && review.sentiment.label) { %>
+                      <div class="mt-2">
+                        <span class="sentiment-indicator sentiment-<%= review.sentiment.label %>"></span>
+                        <small class="text-muted">Sentiment: <%= review.sentiment.label.charAt(0).toUpperCase() + review.sentiment.label.slice(1) %></small>
+                      </div>
+                    <% } %>
                    
                 </div>
                 <br>
@@ -96,3 +208,74 @@
   </div>
 </div>
   <script src="/js/map.js"></script>
+
+<script>
+// Track user behavior for AI recommendations
+document.addEventListener('DOMContentLoaded', function() {
+    const listingId = '<%= listing._id %>';
+    let startTime = Date.now();
+    
+    // Track page view
+    fetch('/ai/track-behavior', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            listingId: listingId,
+            action: 'view',
+            duration: 0
+        })
+    });
+    
+    // Track time spent on page
+    window.addEventListener('beforeunload', function() {
+        const duration = Math.floor((Date.now() - startTime) / 1000);
+        fetch('/ai/track-behavior', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                listingId: listingId,
+                action: 'view',
+                duration: duration
+            })
+        });
+    });
+    
+    // Favorite functionality
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', async function() {
+            const isFavorited = this.classList.contains('favorited');
+            const action = isFavorited ? 'unfavorite' : 'favorite';
+            
+            try {
+                const response = await fetch('/ai/track-behavior', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        listingId: listingId,
+                        action: action
+                    })
+                });
+                
+                if (response.ok) {
+                    if (isFavorited) {
+                        this.classList.remove('favorited');
+                        document.getElementById('favoriteText').textContent = 'Add to Favorites';
+                    } else {
+                        this.classList.add('favorited');
+                        document.getElementById('favoriteText').textContent = 'Favorited';
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating favorite:', error);
+            }
+        });
+    }
+});
+</script>

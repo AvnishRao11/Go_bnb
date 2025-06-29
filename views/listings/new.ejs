@@ -1,47 +1,349 @@
 <% layout("./layouts/boilerplate")%> 
+
+<style>
+    .ai-features {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .ai-button {
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .ai-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        color: white;
+    }
+    
+    .ai-button:disabled {
+        opacity: 0.6;
+        transform: none;
+    }
+    
+    .ai-suggestion {
+        background: #f8f9fa;
+        border-left: 4px solid #667eea;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 5px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .tags-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .tag {
+        background: #e9ecef;
+        color: #495057;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        border: 1px solid #dee2e6;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .tag:hover {
+        background: #667eea;
+        color: white;
+    }
+    
+    .tag.selected {
+        background: #667eea;
+        color: white;
+    }
+</style>
+
+<div class="ai-features">
+    <h4><i class="fas fa-robot"></i> AI-Powered Listing Creation</h4>
+    <p class="mb-0">Let our AI help you create compelling listings with smart content generation and pricing optimization.</p>
+</div>
+
 <div class="row mt-3">
     <div class="col-8 offset-2">
         <h3>Create New Listing</h3>
-        <form action="/listings" method="POST"class="needs-validation" novalidate enctype="multipart/form-data">
-        <div class="mb-3">
-            <label for="title" class="form-label" >Title:</label>
-            <input type="text" name="listing[title]" placeholder="Enter title" class="form-control" required>
-            <div class="invalid-feedback">
-               Enter Valid Title
-              </div>
-            <div class="valid-feedback">
-              Looks Good
-              </div>
-        </div>
-        <div class="mb-3">
-            <label for="description" class="form-label">Description:</label>
-            <textarea name="listing[description]" class="form-control" required></textarea>
-            <div class="invalid-feedback">Enter Short Description</div>
-        </div>
-       
-        <div class="mb-3">
-            <label for="url" class="form-label" >Upload Listing Image</label>
-            <input type="file" name="listing[image]"  class="form-control">
-        </div>
-        <div class="row">
-            <div class="mb-3 col-md-4" >
-                <label for="price" class="form-label" >Price:</label>
-                <input type="number" name="listing[price]" placeholder="Enter price" class="form-control"required>
-                <div class="invalid-feedback">Enter Valid Price</div>
+        <form action="/listings" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label>
+                <input type="text" name="listing[title]" id="title" placeholder="Enter title" class="form-control" required>
+                <div class="invalid-feedback">Enter Valid Title</div>
+                <div class="valid-feedback">Looks Good</div>
             </div>
-            <div class="mb-3 col-md-8" >
-                <label for="country" class="form-label" >Country:</label>
-                <input type="text" name="listing[country]" placeholder="Enter country" class="form-control" required>
-                <div class="invalid-feedback">Enter Valid Country</div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label>
+                <div class="d-flex gap-2 mb-2">
+                    <button type="button" class="ai-button" id="generateDescription">
+                        <i class="fas fa-magic"></i> Generate Description
+                    </button>
+                    <button type="button" class="ai-button" id="generateTags">
+                        <i class="fas fa-tags"></i> Generate Tags
+                    </button>
+                </div>
+                <textarea name="listing[description]" id="description" class="form-control" required></textarea>
+                <div class="invalid-feedback">Enter Short Description</div>
             </div>
-        </div>
-        
-        <div class="mb-3">
-            <label for="location" class="form-label" >Location:</label>
-            <input type="text" name="listing[location]" placeholder="Enter location" class="form-control"required>
-            <div class="invalid-feedback">Enter Valid Location</div>
-        </div>
-        <button class="btn mt-3 btn-dark add-btn">Add</button>
-    </form>
+            
+            <!-- AI Generated Tags -->
+            <div class="mb-3" id="tagsSection" style="display: none;">
+                <label class="form-label">AI Generated Tags:</label>
+                <div class="tags-container" id="tagsContainer"></div>
+                <input type="hidden" name="listing[aiTags]" id="selectedTags">
+            </div>
+           
+            <div class="mb-3">
+                <label for="url" class="form-label">Upload Listing Image</label>
+                <input type="file" name="listing[image]" class="form-control">
+            </div>
+            
+            <div class="row">
+                <div class="mb-3 col-md-4">
+                    <label for="price" class="form-label">Price:</label>
+                    <div class="input-group">
+                        <input type="number" name="listing[price]" id="price" placeholder="Enter price" class="form-control" required>
+                        <button type="button" class="btn btn-outline-secondary" id="optimizePrice">
+                            <i class="fas fa-chart-line"></i>
+                        </button>
+                    </div>
+                    <div class="invalid-feedback">Enter Valid Price</div>
+                </div>
+                <div class="mb-3 col-md-8">
+                    <label for="country" class="form-label">Country:</label>
+                    <input type="text" name="listing[country]" id="country" placeholder="Enter country" class="form-control" required>
+                    <div class="invalid-feedback">Enter Valid Country</div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="location" class="form-label">Location:</label>
+                <input type="text" name="listing[location]" id="location" placeholder="Enter location" class="form-control" required>
+                <div class="invalid-feedback">Enter Valid Location</div>
+            </div>
+            
+            <!-- Price Optimization Suggestion -->
+            <div class="ai-suggestion" id="priceSuggestion" style="display: none;">
+                <h6><i class="fas fa-lightbulb"></i> AI Price Suggestion</h6>
+                <p id="priceSuggestionText"></p>
+                <button type="button" class="btn btn-sm btn-primary" id="applyPriceSuggestion">Apply Suggestion</button>
+            </div>
+            
+            <button class="btn mt-3 btn-dark add-btn">Add Listing</button>
+        </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateDescriptionBtn = document.getElementById('generateDescription');
+    const generateTagsBtn = document.getElementById('generateTags');
+    const optimizePriceBtn = document.getElementById('optimizePrice');
+    const descriptionField = document.getElementById('description');
+    const tagsContainer = document.getElementById('tagsContainer');
+    const tagsSection = document.getElementById('tagsSection');
+    const selectedTagsInput = document.getElementById('selectedTags');
+    const priceField = document.getElementById('price');
+    const priceSuggestion = document.getElementById('priceSuggestion');
+    const priceSuggestionText = document.getElementById('priceSuggestionText');
+    const applyPriceSuggestionBtn = document.getElementById('applyPriceSuggestion');
+    
+    let selectedTags = [];
+    
+    // Generate Description
+    generateDescriptionBtn.addEventListener('click', async function() {
+        const title = document.getElementById('title').value;
+        const location = document.getElementById('location').value;
+        const price = document.getElementById('price').value;
+        const country = document.getElementById('country').value;
+        
+        if (!title || !location || !price) {
+            alert('Please fill in title, location, and price first');
+            return;
+        }
+        
+        this.disabled = true;
+        this.innerHTML = '<span class="loading-spinner"></span> Generating...';
+        
+        try {
+            const response = await fetch('/ai/generate-content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: title,
+                    location: location,
+                    price: price,
+                    amenities: []
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                descriptionField.value = data.description;
+                descriptionField.classList.add('is-valid');
+            } else {
+                alert('Failed to generate description. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to generate description. Please try again.');
+        } finally {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-magic"></i> Generate Description';
+        }
+    });
+    
+    // Generate Tags
+    generateTagsBtn.addEventListener('click', async function() {
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const location = document.getElementById('location').value;
+        
+        if (!title || !description || !location) {
+            alert('Please fill in title, description, and location first');
+            return;
+        }
+        
+        this.disabled = true;
+        this.innerHTML = '<span class="loading-spinner"></span> Generating...';
+        
+        try {
+            const response = await fetch('/ai/generate-content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: title,
+                    location: location,
+                    price: document.getElementById('price').value,
+                    amenities: []
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.tags) {
+                displayTags(data.tags);
+                tagsSection.style.display = 'block';
+            } else {
+                alert('Failed to generate tags. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to generate tags. Please try again.');
+        } finally {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-tags"></i> Generate Tags';
+        }
+    });
+    
+    // Display Tags
+    function displayTags(tags) {
+        tagsContainer.innerHTML = '';
+        tags.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'tag';
+            tagElement.textContent = tag;
+            tagElement.addEventListener('click', () => toggleTag(tag, tagElement));
+            tagsContainer.appendChild(tagElement);
+        });
+    }
+    
+    // Toggle Tag Selection
+    function toggleTag(tag, element) {
+        if (element.classList.contains('selected')) {
+            element.classList.remove('selected');
+            selectedTags = selectedTags.filter(t => t !== tag);
+        } else {
+            element.classList.add('selected');
+            selectedTags.push(tag);
+        }
+        selectedTagsInput.value = JSON.stringify(selectedTags);
+    }
+    
+    // Optimize Price
+    optimizePriceBtn.addEventListener('click', async function() {
+        const location = document.getElementById('location').value;
+        const price = document.getElementById('price').value;
+        const country = document.getElementById('country').value;
+        
+        if (!location || !price) {
+            alert('Please fill in location and price first');
+            return;
+        }
+        
+        this.disabled = true;
+        this.innerHTML = '<span class="loading-spinner"></span>';
+        
+        try {
+            const response = await fetch('/ai/price-suggestions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    location: location,
+                    amenities: [],
+                    propertyType: 'property',
+                    currentPrice: price
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const suggestion = data.suggestions;
+                priceSuggestionText.innerHTML = `
+                    <strong>Recommended Price:</strong> ₹${suggestion.recommendedPrice.toLocaleString('en-IN')}/night<br>
+                    <strong>Reasoning:</strong> ${suggestion.reasoning}<br>
+                    <strong>Seasonal Adjustments:</strong> Peak: ₹${suggestion.seasonalAdjustments.peak.toLocaleString('en-IN')}, Off-peak: ₹${suggestion.seasonalAdjustments.offPeak.toLocaleString('en-IN')}
+                `;
+                priceSuggestion.style.display = 'block';
+                
+                // Store suggested price for apply button
+                applyPriceSuggestionBtn.onclick = () => {
+                    priceField.value = suggestion.recommendedPrice;
+                    priceSuggestion.style.display = 'none';
+                };
+            } else {
+                alert('Failed to get price suggestions. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to get price suggestions. Please try again.');
+        } finally {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-chart-line"></i>';
+        }
+    });
+});
+</script>

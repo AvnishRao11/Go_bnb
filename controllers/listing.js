@@ -3,6 +3,7 @@ const ExpressError = require("../utils/ExpressError");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const mapToken=process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
+const AIService = require('../utils/aiService');
 
 module.exports.index=async(req,res)=>{
     const allLisitngs=await Listing.find({});
@@ -70,7 +71,23 @@ module.exports.renderNewForm=(req,res)=>{
 
          newListing.geometry=response.body.features[0].geometry;
 
+         // Save the listing first
          const savedListing = await newListing.save();
+
+         // AI Analysis after saving
+         const aiAnalysis = await AIService.analyzeListingContent(savedListing);
+         savedListing.aiTags = aiAnalysis.aiTags;
+         savedListing.sentimentScore = aiAnalysis.sentimentScore;
+         savedListing.amenities = aiAnalysis.amenities;
+         savedListing.propertyType = aiAnalysis.propertyType;
+         savedListing.aiFeatures = {
+             lastAnalyzed: new Date(),
+             keywords: aiAnalysis.keywords,
+             category: aiAnalysis.propertyType,
+             seasonality: ['spring', 'summer', 'fall', 'winter']
+         };
+         await savedListing.save();
+
         req.flash("sucess","new listing created !!");
          res.redirect(`/listings`);
      } catch (err) {
@@ -91,19 +108,33 @@ module.exports.renderNewForm=(req,res)=>{
      res.render("./listings/edit.ejs",{listing,originalImageUrl});
  };
 
- module.exports.updateListing=async(req,res)=>{
-     let {id}=req.params;
-     let listing=await Listing.findByIdAndUpdate(id,{...req.body.listing});
-    if(typeof req.file!=="undefined"){
-        let url=req.file.path;
-        let filename=req.file.filename;
-        listing.image={url,filename};
+ module.exports.updateListing = async (req, res) => {
+    let { id } = req.params;
+    let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }, { new: true });
+    if (typeof req.file !== "undefined") {
+        let url = req.file.path;
+        let filename = req.file.filename;
+        listing.image = { url, filename };
         await listing.save();
     }
- 
-     req.flash("sucess","Listing Updated !!");
-     res.redirect(`/listings/${id}`);
- };
+
+    // AI Analysis after update
+    const aiAnalysis = await AIService.analyzeListingContent(listing);
+    listing.aiTags = aiAnalysis.aiTags;
+    listing.sentimentScore = aiAnalysis.sentimentScore;
+    listing.amenities = aiAnalysis.amenities;
+    listing.propertyType = aiAnalysis.propertyType;
+    listing.aiFeatures = {
+        lastAnalyzed: new Date(),
+        keywords: aiAnalysis.keywords,
+        category: aiAnalysis.propertyType,
+        seasonality: ['spring', 'summer', 'fall', 'winter']
+    };
+    await listing.save();
+
+    req.flash("sucess", "Listing Updated !!");
+    res.redirect(`/listings/${id}`);
+};
 
  module.exports.deleteListing=async(req,res)=>{
      let {id}=req.params;

@@ -1,0 +1,233 @@
+<% layout("./layouts/boilerplate")%>
+
+<style>
+    .recommendations-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 10px;
+    }
+    
+    .ai-badge {
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+    
+    .recommendation-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .recommendation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .ai-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .ai-tag {
+        background: #f8f9fa;
+        color: #495057;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .sentiment-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .sentiment-positive { background: #28a745; }
+    .sentiment-neutral { background: #ffc107; }
+    .sentiment-negative { background: #dc3545; }
+    
+    .user-profile {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .preference-item {
+        display: flex;
+        align-items: center;
+        margin: 0.5rem 0;
+    }
+    
+    .preference-icon {
+        width: 20px;
+        margin-right: 0.5rem;
+        color: #667eea;
+    }
+</style>
+
+<div class="recommendations-header text-center">
+    <div class="ai-badge">
+        <i class="fas fa-robot"></i> AI-Powered Recommendations
+    </div>
+    <h1>Personalized for You</h1>
+    <p>Discover properties tailored to your preferences and travel style</p>
+</div>
+
+<div class="container">
+    <!-- User Profile Section -->
+    <div class="user-profile">
+        <h4><i class="fas fa-user-circle"></i> Your Travel Profile</h4>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="preference-item">
+                    <i class="fas fa-map-marker-alt preference-icon"></i>
+                    <strong>Travel Style:</strong> 
+                    <span class="badge bg-primary ms-2"><%= user.aiProfile?.travelStyle || 'Discovering' %></span>
+                </div>
+                <div class="preference-item">
+                    <i class="fas fa-heart preference-icon"></i>
+                    <strong>Interests:</strong> 
+                    <% if (user.aiProfile?.interests && user.aiProfile.interests.length > 0) { %>
+                        <% user.aiProfile.interests.forEach(interest => { %>
+                            <span class="badge bg-info me-1"><%= interest %></span>
+                        <% }) %>
+                    <% } else { %>
+                        <span class="text-muted">Still learning your preferences...</span>
+                    <% } %>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="preference-item">
+                    <i class="fas fa-search preference-icon"></i>
+                    <strong>Recent Searches:</strong> 
+                    <span class="text-muted"><%= user.searchHistory?.length || 0 %> searches</span>
+                </div>
+                <div class="preference-item">
+                    <i class="fas fa-eye preference-icon"></i>
+                    <strong>Viewed Properties:</strong> 
+                    <span class="text-muted"><%= user.viewedListings?.length || 0 %> properties</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations Grid -->
+    <h3 class="mb-4">
+        <i class="fas fa-star"></i> 
+        Recommended for You 
+        <small class="text-muted">(<%= recommendations.length %> properties)</small>
+    </h3>
+
+    <% if (recommendations.length === 0) { %>
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4>No recommendations yet</h4>
+            <p class="text-muted">Start browsing properties to get personalized recommendations!</p>
+            <a href="/listings" class="btn btn-primary">Browse Properties</a>
+        </div>
+    <% } else { %>
+        <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1">
+            <% recommendations.forEach((listing, index) => { %>
+                <div class="col mb-4">
+                    <div class="card recommendation-card h-100">
+                        <img src="<%= listing.image.url %>" class="card-img-top" alt="<%= listing.title %>" style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title"><%= listing.title %></h5>
+                            <p class="card-text text-muted">
+                                <i class="fas fa-map-marker-alt"></i> <%= listing.location %>, <%= listing.country %>
+                            </p>
+                            <p class="card-text">
+                                <strong class="text-primary">₹<%= listing.price.toLocaleString("en-In") %></strong> / night
+                            </p>
+                            
+                            <!-- AI Tags -->
+                            <% if (listing.aiTags && listing.aiTags.length > 0) { %>
+                                <div class="ai-tags">
+                                    <% listing.aiTags.slice(0, 4).forEach(tag => { %>
+                                        <span class="ai-tag"><%= tag %></span>
+                                    <% }) %>
+                                </div>
+                            <% } %>
+                            
+                            <!-- Sentiment Indicator -->
+                            <% if (listing.sentimentScore !== undefined) { %>
+                                <div class="mt-2">
+                                    <span class="sentiment-indicator sentiment-<%= listing.sentimentScore > 0 ? 'positive' : listing.sentimentScore < 0 ? 'negative' : 'neutral' %>"></span>
+                                    <small class="text-muted">Guest satisfaction</small>
+                                </div>
+                            <% } %>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <a href="/listings/<%= listing._id %>" class="btn btn-outline-primary btn-sm w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } %>
+
+    <!-- AI Insights Section -->
+    <div class="mt-5">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5><i class="fas fa-chart-line"></i> AI Insights</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="border-end">
+                            <h4 class="text-primary"><%= user.viewedListings?.length || 0 %></h4>
+                            <p class="text-muted">Properties Viewed</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="border-end">
+                            <h4 class="text-success"><%= user.favoriteListings?.length || 0 %></h4>
+                            <p class="text-muted">Favorites</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h4 class="text-info"><%= user.searchHistory?.length || 0 %></h4>
+                        <p class="text-muted">Searches Made</p>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        Our AI learns from your browsing behavior to provide better recommendations over time.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Track page view for AI learning
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'view_recommendations', {
+                'event_category': 'ai',
+                'event_label': 'recommendations_page'
+            });
+        }
+    });
+</script> 

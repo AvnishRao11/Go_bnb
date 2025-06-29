@@ -25,6 +25,46 @@
     padding:0.5rem 3rem 0.5rem 3rem;
     font-size: 0.9rem;
   }
+  
+  .ai-search-btn {
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    color: #fff;
+    border-radius: 25px;
+    padding: 0 1rem 0 1rem;
+    border: none;
+    margin-left: 0.5rem;
+  }
+  
+  .ai-search-btn:hover {
+    background: linear-gradient(45deg, #ff5252, #26a69a);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+  
+  .ai-badge {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+  }
+  
+  .recommendations-link {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+  }
+  
+  .recommendations-link:hover {
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
 
 </style>
 
@@ -37,18 +77,30 @@
           <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
             <div class="navbar-nav">
               <a class="nav-link" href="/listings">Explore</a>
+              <%if(Curruser){%>
+                <a class="nav-link recommendations-link" href="/ai/recommendations">
+                  <i class="fas fa-robot"></i> AI Recommendations
+                  <span class="ai-badge">NEW</span>
+                </a>
+              <%}%>
             </div>
-            <!-- search option  -->
+            <!-- AI-enhanced search option  -->
             <div class="navbar-nav ms-auto">
-              <form class="d-flex" role="search" action="/listings/search" method="GET">
+              <form class="d-flex" role="search" action="/ai/search" method="GET" id="aiSearchForm">
                 <input 
                   class="form-control me-2 search-inp" 
                   type="search" 
-                  name="country" 
-                  placeholder="Search by country..." 
-                  value="<%= typeof country !== 'undefined' ? country : '' %>"
+                  name="query" 
+                  placeholder="Search with AI (e.g., 'beach house with pool near Mumbai')..." 
+                  value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>"
+                  id="aiSearchInput"
                 />
-                <button class="btn search-btn" type="submit"><i class="fa-brands fa-searchengin"></i>Search</button>
+                <button class="btn search-btn" type="submit">
+                  <i class="fa-brands fa-searchengin"></i>Search
+                </button>
+                <button class="btn ai-search-btn" type="button" id="aiSearchBtn" title="AI-Enhanced Search">
+                  <i class="fas fa-robot"></i>
+                </button>
               </form>
             </div>
             <!-- right side of navbar -->
@@ -65,5 +117,50 @@
           </div>
         </div>
       </nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const aiSearchBtn = document.getElementById('aiSearchBtn');
+    const aiSearchInput = document.getElementById('aiSearchInput');
+    const aiSearchForm = document.getElementById('aiSearchForm');
+    
+    // AI Search Button Click
+    aiSearchBtn.addEventListener('click', function() {
+        if (aiSearchInput.value.trim()) {
+            aiSearchForm.submit();
+        } else {
+            aiSearchInput.focus();
+            aiSearchInput.placeholder = "Try: 'luxury villa with ocean view' or 'budget apartment near station'";
+        }
+    });
+    
+    // Enhanced placeholder suggestions
+    const placeholders = [
+        "Search with AI (e.g., 'beach house with pool near Mumbai')...",
+        "Try: 'mountain cabin with fireplace'...",
+        "Try: 'luxury apartment in city center'...",
+        "Try: 'family-friendly villa with garden'...",
+        "Try: 'romantic getaway with ocean view'..."
+    ];
+    
+    let placeholderIndex = 0;
+    setInterval(() => {
+        aiSearchInput.placeholder = placeholders[placeholderIndex];
+        placeholderIndex = (placeholderIndex + 1) % placeholders.length;
+    }, 3000);
+    
+    // Show AI enhancement message
+    if (typeof enhancedQuery !== 'undefined' && enhancedQuery) {
+        const enhancedMsg = document.createElement('div');
+        enhancedMsg.className = 'alert alert-info alert-dismissible fade show mt-2';
+        enhancedMsg.innerHTML = `
+            <i class="fas fa-robot"></i> 
+            <strong>AI Enhanced:</strong> Your search "${searchQuery}" was enhanced to "${enhancedQuery}"
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        aiSearchForm.parentNode.appendChild(enhancedMsg);
+    }
+});
+</script>
 </body>
 </html>

@@ -20,6 +20,7 @@ const ExpressError=require("./utils/ExpressError.js");
 app.set("view engine","ejs");
 app.set("views",path.join(__dirname,"views"));
 app.use(express.urlencoded({extended:true}));
+app.use(express.json()); // Add JSON parsing for AI endpoints
 app.use(methodOverride("_method"));
 app.engine('ejs',ejsmate);
 app.use(express.static(path.join(__dirname,"/public")));
@@ -28,6 +29,7 @@ app.use(express.static(path.join(__dirname,"/public")));
 const listingroute=require('./routes/listing.js');
 const reviewroute=require('./routes/review.js');
 const userroute=require('./routes/user.js');
+const aiRoute=require('./routes/ai.js');
 
 // const Mongo_url='mongodb://127.0.0.1:27017/wanderlust';
 const dbUrl=process.env.ATLASDB_URL;
@@ -35,6 +37,7 @@ console.log("Running in:", process.env.NODE_ENV);
 console.log("ATLASDB_URL:", process.env.ATLASDB_URL);
 console.log("MAPBOX_TOKEN:", process.env.MAPBOX_TOKEN);
 console.log("CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
+console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY ? "Configured" : "Not configured");
 
 
 
@@ -104,6 +107,7 @@ app.use((req,res,next)=>{
 app.use('/listings',listingroute);
 app.use('/listings/:id/reviews',reviewroute);
 app.use('/',userroute);
+app.use('/ai',aiRoute);
 
 
 app.get("/",(req,res)=>{
