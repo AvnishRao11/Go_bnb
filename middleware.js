@@ -58,4 +58,15 @@ module.exports.isReviewauthor=async(req,res,next)=>{
      }
      next();
 };
+module.exports.stripAIFields = (req, res, next) => {
+    if (req.body && req.body.listing) {
+        delete req.body.listing.aiTags;
+        delete req.body.listing.sentimentScore;
+        delete req.body.listing.amenities;
+        delete req.body.listing.propertyType;
+        delete req.body.listing.aiFeatures;
+    }
+    next();
+};
+
 

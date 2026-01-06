@@ -5,7 +5,7 @@ const Listing=require("../models/listing.js");
 const ExpressError=require("../utils/ExpressError.js");
 const {listingSchema}=require("../schema.js");
 const passport=require('passport');
-const{isLoggedIn, isOwner,validateListing}=require('../middleware.js');
+const{isLoggedIn, isOwner,validateListing,stripAIFields}=require('../middleware.js');
 const review = require('../models/review.js');
 const listingController=require("../controllers/listing.js");
 const {storage}=require("../cloud_config.js");
@@ -20,7 +20,7 @@ router.get('/filter', wrapAsync(listingController.filterListings));
 
 router.route("/")
 .get(wrapAsync(listingController.index))
-.post(isLoggedIn,upload.single('listing[image]'),validateListing,wrapAsync(listingController.createNewListing));
+.post(isLoggedIn,upload.single('listing[image]'),stripAIFields,validateListing,wrapAsync(listingController.createNewListing));
 
 
  //new Route
@@ -29,7 +29,7 @@ router.route("/")
 
 router .route("/:id")
 .get( wrapAsync(listingController.showListing))
-.put( isLoggedIn,isOwner,upload.single('listing[image]'),validateListing,wrapAsync(listingController.updateListing))
+.put( isLoggedIn,isOwner,upload.single('listing[image]'),stripAIFields,validateListing,wrapAsync(listingController.updateListing))
 .delete(isLoggedIn,isOwner, wrapAsync(listingController.deleteListing))
 
 
